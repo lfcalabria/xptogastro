@@ -21,4 +21,5 @@ router.register('itensnotasfiscais', ItemNotaFiscalViewSet)
 
 urlpatterns = [
     path("", index),
+    path('custodiario/', CustoDiarioApiView.as_view(), name='custosdiario'),
 ]

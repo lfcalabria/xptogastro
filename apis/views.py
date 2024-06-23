@@ -1,8 +1,13 @@
+import pandas as pd
 from django.shortcuts import render
 from django.utils.datetime_safe import date
+from django_pandas.io import read_frame
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
+from apis.funcoes import precomedio
+from apis.permissions import IsFinanceiro
 from apis.serializers import *
 
 
@@ -229,3 +234,46 @@ class UnidadeMedidaViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         serializer.validated_data['usuario'] = str(self.request.user)
         serializer.save()
+
+
+class CustoDiarioApiView(APIView):
+    permission_classes = (IsFinanceiro,)
+    """
+    Custo por dia de aula prática
+    """
+
+    def get(self, request):
+        aulas = Aula.objects.all()
+        df_aula = read_frame(aulas)
+        aulas_receita = AulaReceita.objects.filter(aula__in=aulas, ativo=True)
+        df_aulas_receita = read_frame(aulas_receita)
+        df_aulas_receita['id_aula'] = aulas_receita.values_list('aula_id', flat=True)
+        df_aulas_receita['id_receita'] = aulas_receita.values_list('receita_id', flat=True)
+        df_custo = pd.merge(df_aula, df_aulas_receita, left_on=['id'],
+                            right_on=['id_aula'], how='left')
+        colunas = ['data', 'qtd_receita', 'id_receita']
+        df_custo = df_custo[colunas]
+        receitas_ingrediente = ReceitaProduto.objects.all()
+        df_receitas_ingrediente = read_frame(receitas_ingrediente)
+        df_receitas_ingrediente['id_produto'] = receitas_ingrediente.values_list('produto_id', flat=True)
+        df_receitas_ingrediente['id_receita'] = receitas_ingrediente.values_list('receita_id', flat=True)
+        df_custo = pd.merge(df_custo, df_receitas_ingrediente, left_on=['id_receita'],
+                            right_on=['id_receita'], how='left')
+        df_custo['qtd'] = df_custo['qtd_receita'] * df_custo['quantidade']
+        colunas = ['data', 'qtd', 'id_produto']
+        df_custo = df_custo[colunas]
+        df_custo = df_custo.groupby(['data', 'id_produto'])['qtd'].aggregate(['sum'])
+        df_custo = df_custo.reset_index()
+        precos = Preco.objects.all()
+        df_precos = precomedio(precos)
+        df_custo = pd.merge(df_custo, df_precos, left_on=['id_produto'],
+                            right_on=['id_prod'], how='left')
+        df_custo['sum'] = df_custo['sum'].astype(float)
+        df_custo['mean'] = df_custo['mean'].astype(float)
+        df_custo['custo'] = df_custo['sum'] * df_custo['mean']
+        df_custo = df_custo.groupby(['data'])['custo'].aggregate(['sum'])
+        df_custo = df_custo.reset_index()
+        df_custo['sum'] = round(df_custo['sum'], 2)
+        df_custo.columns = ['data', 'valor']
+        serializer = CustoDiarioSerializer(df_custo.to_dict(orient='records'), many=True)
+        return Response(serializer.data)

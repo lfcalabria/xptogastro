@@ -287,3 +287,8 @@ class UnidadeMedidaSerializer(serializers.ModelSerializer):
         model = UnidadeMedida
         fields = '__all__'
         read_only_fields = ['ativo']
+
+
+class CustoDiarioSerializer(serializers.Serializer):
+    data = serializers.DateField()
+    valor = serializers.DecimalField(max_digits=11, decimal_places=2)
