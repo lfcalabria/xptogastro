@@ -1,6 +1,6 @@
 import pandas as pd
 from django_pandas.io import read_frame
-from apis.models import AulaReceita, Receita, ReceitaIngrediente, Produto, Preco
+from apis.models import AulaReceita, Receita, ReceitaProduto, Produto, Preco
 from apis.serializers import ProdutoSerializer
 
 
@@ -52,7 +52,7 @@ def produtosaula(aula_id):
     # Ingredientes usados na aula
     # ************************************
     df_receitas = receitasaula(aula_id)
-    receita_produto = ReceitaIngrediente.objects.filter(receita_id__in=df_receitas.id_receita, ativo=True)
+    receita_produto = ReceitaProduto.objects.filter(receita_id__in=df_receitas.id_receita, ativo=True)
     df_receita_produto = read_frame(receita_produto)
     df_receita_produto['id_produto'] = receita_produto.values_list('produto_id', flat=True)
     colunas = ['quantidade', 'id_produto']

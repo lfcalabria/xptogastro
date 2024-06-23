@@ -18,3 +18,7 @@ router.register('aulas', AulaViewSet)
 router.register('movimentos', MovimentoViewSet)
 router.register('notasfiscais', NotaFiscalViewSet)
 router.register('itensnotasfiscais', ItemNotaFiscalViewSet)
+
+urlpatterns = [
+    path("", index),
+]

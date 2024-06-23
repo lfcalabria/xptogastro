@@ -1,9 +1,14 @@
+from django.shortcuts import render
 from django.utils.datetime_safe import date
 from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 
-from apis.funcoes import movimentaproduto
 from apis.serializers import *
+
+
+def index(request):
+    context = {"dados": 'Apis para o sistema de Controle de Produtos paras as aulas de Gastronomia'}
+    return render(request, 'index.html', context)
 
 
 class AulaViewSet(viewsets.ModelViewSet):
