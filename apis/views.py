@@ -6,7 +6,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apis.funcoes import precomedio
+from apis.funcoes import precomedio, posicaoestoque
 from apis.permissions import IsFinanceiro
 from apis.serializers import *
 
@@ -276,4 +276,17 @@ class CustoDiarioApiView(APIView):
         df_custo['sum'] = round(df_custo['sum'], 2)
         df_custo.columns = ['data', 'valor']
         serializer = CustoDiarioSerializer(df_custo.to_dict(orient='records'), many=True)
+        return Response(serializer.data)
+
+
+class PosicaoEstoqueApiView(APIView):
+    permission_classes = (IsFinanceiro,)
+    """
+    Posição do Estque
+    """
+    def get(self, request):
+        df_estoque = posicaoestoque()
+        colunas = ['nome', 'unidade', 'quantidade', 'preco_medio', 'total']
+        df_estoque = df_estoque[colunas]
+        serializer = PosicaoEstoqueSerializer(df_estoque.to_dict(orient='records'), many=True)
         return Response(serializer.data)

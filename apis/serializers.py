@@ -292,3 +292,11 @@ class UnidadeMedidaSerializer(serializers.ModelSerializer):
 class CustoDiarioSerializer(serializers.Serializer):
     data = serializers.DateField()
     valor = serializers.DecimalField(max_digits=11, decimal_places=2)
+
+
+class PosicaoEstoqueSerializer(serializers.Serializer):
+    nome = serializers.CharField(max_length=100)
+    unidade = serializers.CharField(max_length=100)
+    quantidade = serializers.DecimalField(max_digits=11, decimal_places=5)
+    preco_medio = serializers.DecimalField(max_digits=11, decimal_places=2)
+    total = serializers.DecimalField(max_digits=11, decimal_places=2)
