@@ -333,3 +333,8 @@ class DetalheAulaSerializer(serializers.Serializer):
     laboratorio = serializers.CharField(max_length=2000)
     receitas = ReceitaItemSerializer(many=True)
     produtos = ProdutoItemSerializer(many=True)
+
+
+class EntradaNotaFiscalSerializer(serializers.Serializer):
+    notafiscal = NotaFiscalSerializer()
+    produtos = ItemNotaFicalSerializer(many=True)

@@ -27,4 +27,5 @@ urlpatterns = [
     path('detalheaula/<int:pk>/', DetalhesAulaApiView.as_view(), name='detalheaula'),
     path('confirmaaula/<int:pk>/', ConfirmaAulaApiView.as_view(), name='confirmaaula'),
     path('cancelaaula/<int:pk>/', CancelaAulaApiView.as_view(), name='cancelaaula'),
+    path('entradanota/', EntradaNotaFiscalApiView.as_view(), name='entradanota'),
 ]

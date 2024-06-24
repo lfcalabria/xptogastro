@@ -3,8 +3,10 @@ from datetime import timedelta
 from dateutil.parser import parse
 from django.db import transaction
 from django.shortcuts import render
+from django.utils.dateparse import parse_date
 from django.utils.datetime_safe import date
 from rest_framework import viewsets, permissions, status, generics
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,7 +21,7 @@ def index(request):
 
 
 class AulaViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsPedagogico | IsProfessor,  IsAuthenticated, )
     queryset = Aula.objects.filter(ativo=True)
     serializer_class = AulaSerializer
 
@@ -35,7 +37,7 @@ class AulaViewSet(viewsets.ModelViewSet):
 
 
 class AulaReceitaViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsPedagogico | IsProfessor,  IsAuthenticated, )
     queryset = AulaReceita.objects.filter(ativo=True)
     serializer_class = AulaReceitaSerializer
 
@@ -51,7 +53,7 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
     """
     Cadastro de Disciplinas
     """
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsPedagogico,  IsAuthenticated, )
     queryset = Disciplina.objects.filter(ativo=True)
     serializer_class = DisciplinaSerializer
 
@@ -64,7 +66,7 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
 
 
 class FornecedorViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsFinanceiro,  IsAuthenticated, )
     queryset = Fornecedor.objects.filter(ativo=True)
     serializer_class = FornecedorSerializer
 
@@ -77,7 +79,7 @@ class FornecedorViewSet(viewsets.ModelViewSet):
 
 
 class ItemNotaFiscalViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsFinanceiro,  IsAuthenticated, )
     queryset = ItemNotaFiscal.objects.filter(ativo=True)
     serializer_class = ItemNotaFicalSerializer
 
@@ -90,7 +92,7 @@ class ItemNotaFiscalViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class LaboratorioViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsPedagogico,  IsAuthenticated, )
     queryset = Laboratorio.objects.filter(ativo=True)
     serializer_class = LaboratorioSerializer
 
@@ -103,7 +105,7 @@ class LaboratorioViewSet(viewsets.ModelViewSet):
 
 
 class MovimentoViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsFinanceiro,  IsAuthenticated, )
     queryset = Movimento.objects.filter(ativo=True)
     serializer_class = MovimentoSerializer
 
@@ -135,7 +137,7 @@ class MovimentoViewSet(viewsets.ModelViewSet):
 
 
 class NotaFiscalViewSet(viewsets.ReadOnlyModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions, )
+    permission_classes = (IsFinanceiro,  IsAuthenticated, )
     queryset = NotaFiscal.objects.filter(ativo=True)
     serializer_class = NotaFiscalSerializer
 
@@ -148,7 +150,7 @@ class NotaFiscalViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class PrecoViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsFinanceiro,  IsAuthenticated, )
     queryset = Preco.objects.filter(ativo=True)
     serializer_class = PrecoSerializer
 
@@ -161,7 +163,7 @@ class PrecoViewSet(viewsets.ModelViewSet):
 
 
 class ProdutoViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsProfessor,  IsAuthenticated, )
     queryset = Produto.objects.filter(quantidade__gt=0) | Produto.objects.filter(ativo=True)
     serializer_class = ProdutoSerializer
 
@@ -174,7 +176,7 @@ class ProdutoViewSet(viewsets.ModelViewSet):
 
 
 class ProfessorViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsPedagogico,  IsAuthenticated, )
     queryset = Professor.objects.filter(ativo=True)
     serializer_class = ProfessorSerializer
 
@@ -187,7 +189,7 @@ class ProfessorViewSet(viewsets.ModelViewSet):
 
 
 class ReceitaViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsProfessor,  IsAuthenticated,)
     queryset = Receita.objects.filter(ativo=True)
     serializer_class = ReceitaSerializer
 
@@ -200,7 +202,7 @@ class ReceitaViewSet(viewsets.ModelViewSet):
 
 
 class ReceitaProdutoViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsProfessor,  IsAuthenticated, )
     queryset = ReceitaProduto.objects.filter(ativo=True)
     serializer_class = ReceitaProdutoSerializer
 
@@ -213,7 +215,7 @@ class ReceitaProdutoViewSet(viewsets.ModelViewSet):
 
 
 class TipoCulinariaViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsProfessor,  IsAuthenticated, )
     queryset = TipoCulinaria.objects.filter(ativo=True)
     serializer_class = TipoCulinariaSerializer
 
@@ -226,7 +228,7 @@ class TipoCulinariaViewSet(viewsets.ModelViewSet):
 
 
 class UnidadeMedidaViewSet(viewsets.ModelViewSet):
-    permission_classes = (permissions.DjangoModelPermissions,)
+    permission_classes = (IsProfessor,  IsAuthenticated, )
     queryset = UnidadeMedida.objects.filter(ativo=True)
     serializer_class = UnidadeMedidaSerializer
 
@@ -239,7 +241,7 @@ class UnidadeMedidaViewSet(viewsets.ModelViewSet):
 
 
 class CustoDiarioApiView(APIView):
-    permission_classes = (IsFinanceiro,)
+    permission_classes = (IsFinanceiro, IsAuthenticated,)
     """
     Custo por dia de aula prática
     """
@@ -282,7 +284,7 @@ class CustoDiarioApiView(APIView):
 
 
 class PosicaoEstoqueApiView(APIView):
-    permission_classes = (IsFinanceiro,)
+    permission_classes = (IsFinanceiro, IsAuthenticated,)
     """
     Posição do Estque
     """
@@ -295,7 +297,7 @@ class PosicaoEstoqueApiView(APIView):
 
 
 class NecessidadeCompraApiView(APIView):
-    permission_classes = (IsFinanceiro, )
+    permission_classes = (IsFinanceiro, IsAuthenticated,)
 
     def get(self, request, format=None):
         data = request.query_params.get('data')
@@ -344,7 +346,7 @@ class NecessidadeCompraApiView(APIView):
 
 
 class DetalhesAulaApiView(generics.RetrieveAPIView):
-    permission_classes = (IsProfessor | IsPedagogico, )
+    permission_classes = (IsProfessor | IsPedagogico, IsAuthenticated,)
     serializer_class = AulaSerializer
     queryset = Aula.objects.select_related(
             'disciplina',
@@ -385,6 +387,7 @@ class DetalhesAulaApiView(generics.RetrieveAPIView):
 
 
 class ConfirmaAulaApiView(generics.UpdateAPIView):
+    permission_classes = (IsPedagogico, IsAuthenticated,)
     queryset = Aula.objects.all()
     serializer_class = AulaSerializer
 
@@ -415,6 +418,7 @@ class ConfirmaAulaApiView(generics.UpdateAPIView):
 
 
 class CancelaAulaApiView(generics.UpdateAPIView):
+    permission_classes = (IsPedagogico, IsAuthenticated,)
     queryset = Aula.objects.all()
     serializer_class = AulaSerializer
 
@@ -440,3 +444,63 @@ class CancelaAulaApiView(generics.UpdateAPIView):
         return Response("Aula cancelada com sucesso", status=status.HTTP_200_OK)
 
 
+class EntradaNotaFiscalApiView(generics.CreateAPIView):
+    permission_classes = (IsFinanceiro, IsAuthenticated,)
+    queryset = None
+    serializer_class = EntradaNotaFiscalSerializer
+
+    def create(self, request, *args, **kwargs):
+        try:
+            hoje = date.today()
+            data_emissao = parse_date(request.data.get('notafiscal', {}).get('data_emissao'))
+            if data_emissao and data_emissao > hoje:
+                return Response("Não é possível cadastrar Nota Fiscal no Futuro",
+                                status=status.HTTP_400_BAD_REQUEST)
+            produtos = request.data.get('produtos', [])
+            if len(produtos) == 0:
+                return Response("Tem que ser informado ao menos um produto",
+                                status=status.HTTP_400_BAD_REQUEST)
+            prodid = [produto["produto"] for produto in produtos]
+            prods = Produto.objects.filter(id__in = prodid)
+            prods1 = prods.values_list('id', flat=True)
+            prods1 = set(prods1)
+            prodid = set(prodid)
+            if len(prodid - prods1) != 0:
+                return Response("Os produtos" + str(prodid - prods1) + "não estão cadastrados",
+                                status=status.HTTP_400_BAD_REQUEST)
+            notafiscal = request.data.get('notafiscal')
+            forn_id = notafiscal['fornecedor']
+            fornecedor = Fornecedor.objects.filter(id=forn_id).count()
+            if fornecedor == 0:
+                return Response("Fornecedor não  cadastrado",
+                                status=status.HTTP_400_BAD_REQUEST)
+            valortotal = sum([produto["quantidade"] * produto["preco_unitario"] for produto in produtos])
+            nota_serializer = NotaFiscalSerializer(data=request.data.get('notafiscal', {}))
+            if nota_serializer.is_valid(raise_exception=True):
+                with transaction.atomic():
+                    nota_serializer.validated_data['valor'] = valortotal
+                    nota_serializer.validated_data['usuario'] = str(self.request.user)
+                    nota = nota_serializer.save()
+                    for produto in produtos:
+                        produto['notafiscal'] = nota.id
+                        item_serializer = ItemNotaFicalSerializer(data=produto)
+                        if item_serializer.is_valid(raise_exception=True):
+                            item_serializer.validated_data['usuario'] = str(self.request.user)
+                            item_serializer.save()
+                            movimento = movimentaproduto(produto['produto'], 'E',
+                                                         produto['quantidade'],
+                                                         str(self.request.user))
+                        preco_dict = {"produto": produto['produto'], "data_cotacao": data_emissao,
+                                      "valor": produto['preco_unitario']}
+                        preco_serializer = PrecoSerializer(data=preco_dict)
+                        if preco_serializer.is_valid(raise_exception=True):
+                            preco_serializer.validated_data['usuario'] = str(self.request.user)
+                            preco_serializer.save()
+                        movimento_dict = {"produto": produto['produto'], "tipo": "E", "quantidade": produto['quantidade']}
+                        movimento_serializer = MovimentoSerializer(data=movimento_dict)
+                        if movimento_serializer.is_valid(raise_exception=True):
+                            movimento_serializer.validated_data['usuario'] = str(self.request.user)
+                            movimento_serializer.save()
+                    return Response("Nota Fiscal criada com sucesso", status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(str(e), status=status.HTTP_400_BAD_REQUEST)
