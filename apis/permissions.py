@@ -7,14 +7,13 @@ class IsFinanceiro(BasePermission):
         return request.user.is_authenticated and request.user.groups.filter(name=authorized_group_name).exists()
 
 
-class IsProfessores(BasePermission):
+class IsProfessor(BasePermission):
     def has_permission(self, request, view):
-        authorized_group_name = 'Professores'
-        print((request.user.groups.name))
+        authorized_group_name = 'Professor'
         return request.user.is_authenticated and request.user.groups.filter(name=authorized_group_name).exists()
 
 
 class IsPedagogico(BasePermission):
     def has_permission(self, request, view):
-        authorized_group_name = 'Depto Pedagogigo'
+        authorized_group_name = 'Depto Pedagogico'
         return request.user.is_authenticated and request.user.groups.filter(name=authorized_group_name).exists()

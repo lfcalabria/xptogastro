@@ -1,13 +1,14 @@
-import pandas as pd
+from datetime import timedelta
+
+from dateutil.parser import parse
 from django.shortcuts import render
 from django.utils.datetime_safe import date
-from django_pandas.io import read_frame
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apis.funcoes import precomedio, posicaoestoque
-from apis.permissions import IsFinanceiro
+from apis.funcoes import *
+from apis.permissions import *
 from apis.serializers import *
 
 
@@ -289,4 +290,94 @@ class PosicaoEstoqueApiView(APIView):
         colunas = ['nome', 'unidade', 'quantidade', 'preco_medio', 'total']
         df_estoque = df_estoque[colunas]
         serializer = PosicaoEstoqueSerializer(df_estoque.to_dict(orient='records'), many=True)
+        return Response(serializer.data)
+
+
+class NecessidadeCompraApiView(APIView):
+    permission_classes = (IsFinanceiro, )
+
+    def get(self, request, format=None):
+        data = request.query_params.get('data')
+        confirmada = request.query_params.get('data')
+        hoje = date.today()
+        if data is None:
+            data = hoje + timedelta(30)
+        else:
+            try:
+                data = parse(data, dayfirst=True).date()
+                if data < hoje:
+                    return Response("Data não pode ser anterior a data atual", status=status.HTTP_400_BAD_REQUEST)
+            except:
+                return Response("Data inválida", status=status.HTTP_400_BAD_REQUEST)
+        if confirmada == None:
+            confirmada = 'N'
+        if confirmada.upper() == 'S':
+            aulas = Aula.objects.filter(data__range=(hoje, data), confirmada=True)
+        elif confirmada.upper() == 'N':
+            aulas = Aula.objects.filter(data__range=(hoje, data), confirmada=False)
+        else:
+            return Response('confirmada deve ser S ou N', status=status.HTTP_400_BAD_REQUEST)
+        df_aulas = read_frame(aulas)
+        df_aulas_produtos = pd.DataFrame()
+        for dado in df_aulas.itertuples():
+            df_aula_produtos = produtosaula(dado.id)
+            df_aulas_produtos = pd.concat([df_aulas_produtos, df_aula_produtos])
+        colunas = ['id_produto', 'qtd_ingrediente']
+        df_aulas_produtos = df_aulas_produtos[colunas]
+        df_aulas_produtos = df_aulas_produtos.groupby(['id_produto'])['qtd_ingrediente'].aggregate(['sum'])
+        df_aulas_produtos = df_aulas_produtos.reset_index()
+        df_estoque = posicaoestoque(list(df_aulas_produtos.id_produto))
+        df_estoque = pd.merge(df_estoque, df_aulas_produtos, left_on=['id'],
+                              right_on=['id_produto'], how='left')
+        df_estoque.fillna(0, inplace=True)
+        df_estoque['necessidade'] = df_estoque['quantidade'] - df_estoque['sum']
+        df_estoque['custo'] = df_estoque['necessidade'] * df_estoque['preco_medio']
+        df_necessidade = df_estoque.query('necessidade < 0')
+        df_necessidade['necessidade'] = df_necessidade['necessidade'] * -1
+        df_necessidade['custo'] = df_necessidade['custo'] * -1
+        colunas = ['nome', 'unidade', 'necessidade', 'custo']
+        df_necessidade = df_necessidade[colunas]
+        df_necessidade.columns = ['produto', 'unidade', 'quantidade', 'custo']
+        serializer = NecessidadeCompraSerializer(df_necessidade.to_dict(orient='records'), many=True)
+        return Response(serializer.data)
+
+
+class DetalhesAulaApiView(generics.RetrieveAPIView):
+    permission_classes = (IsProfessor | IsPedagogico, )
+    serializer_class = AulaSerializer
+    queryset = Aula.objects.select_related(
+            'disciplina',
+            'professor',
+            'laboratorio',
+        )
+
+    def get(self, request, *args, **kwargs):
+        aula = self.get_object()
+
+        # ************************************
+        # Informações da aula
+        # ************************************
+        dados = aula.__dict__
+        df_aula = pd.DataFrame([dados])
+        df_aula['professor'] = aula.professor
+        df_aula['disciplina'] = aula.disciplina
+        df_aula['laboratorio'] = aula.laboratorio
+        colunas = ['id', 'data', 'turno', 'qtd_aluno', 'confirmada', 'professor',
+                   'disciplina', 'laboratorio']
+        df_aula = df_aula[colunas]
+        del dados
+        df_receitas = receitasaula(aula.id)
+        df_produto = produtosaula(aula.id)
+        colunas = ['ingrediente', 'unidade', 'qtd_ingrediente', 'custo']
+        df_produto = df_produto[colunas]
+        colunas = ['receita', 'tipoculinaria', 'qtd_receita']
+        df_receitas = df_receitas[colunas]
+        dict_receita = df_receitas.to_dict(orient='records')
+        dict_produto = df_produto.to_dict(orient='records')
+        item_receita = ReceitaItemSerializer(dict_receita, many=True)
+        item_produto = ProdutoItemSerializer(dict_produto, many=True)
+        detalhe = df_aula.to_dict(orient='records')
+        detalhe[0]['receitas'] = item_receita.data
+        detalhe[0]['produtos'] = item_produto.data
+        serializer = DetalheAulaSerializer(detalhe[0])
         return Response(serializer.data)

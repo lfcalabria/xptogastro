@@ -300,3 +300,36 @@ class PosicaoEstoqueSerializer(serializers.Serializer):
     quantidade = serializers.DecimalField(max_digits=11, decimal_places=5)
     preco_medio = serializers.DecimalField(max_digits=11, decimal_places=2)
     total = serializers.DecimalField(max_digits=11, decimal_places=2)
+
+
+class NecessidadeCompraSerializer(serializers.Serializer):
+    produto = serializers.CharField(max_length=100)
+    unidade = serializers.CharField(max_length=200)
+    quantidade = serializers.DecimalField(max_digits=11, decimal_places=5)
+    custo = serializers.DecimalField(max_digits=11, decimal_places=2)
+
+
+class ReceitaItemSerializer(serializers.Serializer):
+    receita = serializers.CharField(max_length=100)
+    tipoculinaria = serializers.CharField(max_length=100)
+    qtd_receita = serializers.IntegerField()
+
+
+class ProdutoItemSerializer(serializers.Serializer):
+    ingrediente = serializers.CharField(max_length=100)
+    unidade = serializers.CharField(max_length=100)
+    qtd_ingrediente = serializers.DecimalField(decimal_places=5, max_digits=11)
+    custo = serializers.DecimalField(decimal_places=2, max_digits=11)
+
+
+class DetalheAulaSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    data = serializers.DateField()
+    turno = serializers.CharField(max_length=10)
+    qtd_aluno = serializers.IntegerField()
+    confirmada = serializers.BooleanField()
+    professor = serializers.CharField(max_length=200)
+    disciplina = serializers.CharField(max_length=200)
+    laboratorio = serializers.CharField(max_length=2000)
+    receitas = ReceitaItemSerializer(many=True)
+    produtos = ProdutoItemSerializer(many=True)
