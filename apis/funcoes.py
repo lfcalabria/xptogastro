@@ -74,7 +74,9 @@ def produtosaula(aula_id):
     df_precos = precomedio(precos)
     df_produto = pd.merge(df_produto, df_precos, left_on=['id_produto'],
                           right_on=['id_prod'], how='left')
+    df_produto = df_produto.infer_objects()
     df_produto.fillna(0, inplace=True)
+    df_produto = df_produto.infer_objects()
     df_produto['qtd_ingrediente'] = df_produto['qtd_ingrediente'].astype(float)
     df_produto['mean'] = df_produto['mean'].astype(float)
     df_produto['custo'] = df_produto['qtd_ingrediente'] * df_produto['mean']

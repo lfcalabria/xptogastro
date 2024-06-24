@@ -25,4 +25,5 @@ urlpatterns = [
     path('posicaoestoque/', PosicaoEstoqueApiView.as_view(), name='posicaoestoque'),
     path('necessidadecompra/', NecessidadeCompraApiView.as_view(), name='necessidadecompra'),
     path('detalheaula/<int:pk>/', DetalhesAulaApiView.as_view(), name='detalheaula'),
+    path('confirmaaula/<int:pk>/', ConfirmaAulaApiView.as_view(), name='confirmaaula'),
 ]

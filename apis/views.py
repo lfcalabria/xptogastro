@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 from dateutil.parser import parse
+from django.db import transaction
 from django.shortcuts import render
 from django.utils.datetime_safe import date
 from rest_framework import viewsets, permissions, status, generics
@@ -381,3 +382,34 @@ class DetalhesAulaApiView(generics.RetrieveAPIView):
         detalhe[0]['produtos'] = item_produto.data
         serializer = DetalheAulaSerializer(detalhe[0])
         return Response(serializer.data)
+
+
+class ConfirmaAulaApiView(generics.UpdateAPIView):
+    queryset = Aula.objects.all()
+    serializer_class = AulaSerializer
+
+    def put(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def perform_update(self, serializer):
+        serializer.validated_data['usuario'] = self.request.user.id
+        serializer.save()
+
+    @transaction.atomic
+    def partial_update(self, request, *args, **kwargs):
+        aula = self.get_object()
+        if aula.confirmada:
+            return Response("Aula já confirmada", status=status.HTTP_400_BAD_REQUEST)
+        produtos = produtosaula(aula.id)
+        for dado in produtos.itertuples():
+            movimento = movimentaproduto(dado.id_produto, 'S', dado.qtd_ingrediente, self.request.user.id)
+            movimento_dict = {"produto": dado.id_produto, "tipo": "S", "quantidade": dado.qtd_ingrediente}
+            movimento_dict['usuario'] = self.request.user.id
+            movimento_serializer = MovimentoSerializer(data=movimento_dict)
+            if movimento_serializer.is_valid(raise_exception=True):
+               movimento_serializer.save()
+        aula.confirmada = True
+        aula.usuario = self.request.user.id
+        aula.save()
+        return Response("Aula confirmada com sucesso", status=status.HTTP_200_OK)
+
