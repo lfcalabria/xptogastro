@@ -413,3 +413,30 @@ class ConfirmaAulaApiView(generics.UpdateAPIView):
         aula.save()
         return Response("Aula confirmada com sucesso", status=status.HTTP_200_OK)
 
+
+class CancelaAulaApiView(generics.UpdateAPIView):
+    queryset = Aula.objects.all()
+    serializer_class = AulaSerializer
+
+    def put(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    @transaction.atomic
+    def partial_update(self, request, *args, **kwargs):
+        aula = self.get_object()
+        if not aula.confirmada:
+            return Response("Aula não confirmada", status=status.HTTP_400_BAD_REQUEST)
+        produtos = produtosaula(aula.id)
+        for dado in produtos.itertuples():
+            movimento = movimentaproduto(dado.id_produto, 'E', dado.qtd_ingrediente, self.request.user.id)
+            movimento_dict = {"produto": dado.id_produto, "tipo": "E", "quantidade": dado.qtd_ingrediente}
+            movimento_dict['usuario'] = str(self.request.user.id)
+            movimento_serializer = MovimentoSerializer(data=movimento_dict)
+            if movimento_serializer.is_valid(raise_exception=True):
+                movimento_serializer.save()
+        aula.confirmada = False
+        aula.usuario = self.request.user.id
+        aula.save()
+        return Response("Aula cancelada com sucesso", status=status.HTTP_200_OK)
+
+
